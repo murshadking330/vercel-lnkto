@@ -1,20 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function Home() {
+export default function SecretShortener() {
   const [url, setUrl] = useState("");
   const [slug, setSlug] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => setAnimate(true), 100);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setShortUrl("");
+    setCopied(false);
+
     const res = await fetch("/api/shorten", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, slug }),
+      body: JSON.stringify({ url, slug, title, description, image }),
     });
+
     const data = await res.json();
+
     if (data.error) {
       setError(data.error);
     } else {
@@ -22,18 +36,32 @@ export default function Home() {
     }
   };
 
+  const handleCopy = async () => {
+    if (shortUrl) {
+      await navigator.clipboard.writeText(shortUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
-    <div style={styles.wrapper}>
-      {/* Animated Starry Background */}
-      <div style={styles.stars}></div>
-      <div style={styles.stars2}></div>
-      <div style={styles.stars3}></div>
+    <div style={styles.page}>
+      {/* 🌌 Night Sky Layers */}
+      <div className="stars"></div>
+      <div className="stars2"></div>
+      <div className="stars3"></div>
 
-      {/* Content */}
-      <div style={styles.container}>
-        <h1 style={styles.title}>🌌 Night Sky URL Shortener</h1>
+      <div
+        style={{
+          ...styles.card,
+          opacity: animate ? 1 : 0,
+          transform: animate ? "scale(1)" : "scale(0.9)",
+          transition: "all 0.8s ease",
+        }}
+      >
+        <h1 style={styles.heading}>🌌 Secret URL Shortener</h1>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
           <input
             type="url"
             placeholder="Enter your URL"
@@ -49,7 +77,34 @@ export default function Home() {
             onChange={(e) => setSlug(e.target.value)}
             style={styles.input}
           />
-          <button type="submit" style={styles.button}>
+          <input
+            type="text"
+            placeholder="Title (optional)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={styles.input}
+          />
+          <textarea
+            placeholder="Description (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            style={{ ...styles.input, resize: "none" }}
+          />
+          <input
+            type="url"
+            placeholder="Image URL (optional)"
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            style={styles.input}
+          />
+
+          <button
+            type="submit"
+            style={styles.button}
+            onMouseOver={(e) => (e.target.style.opacity = "0.85")}
+            onMouseOut={(e) => (e.target.style.opacity = "1")}
+          >
             Shorten URL
           </button>
         </form>
@@ -57,17 +112,73 @@ export default function Home() {
         {error && <p style={styles.error}>⚠️ {error}</p>}
 
         {shortUrl && (
-          <p style={styles.shortUrl}>
-            ✅ Short URL:{" "}
-            <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={styles.link}>
+          <div style={styles.resultBox}>
+            <p style={{ color: "#fff", marginBottom: "5px" }}>✅ Short URL:</p>
+            <a
+              href={shortUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.shortLink}
+            >
               {shortUrl}
             </a>
-          </p>
+
+            <button
+              onClick={handleCopy}
+              style={{
+                ...styles.copyButton,
+                backgroundColor: copied ? "#4CAF50" : "rgba(255,255,255,0.15)",
+              }}
+            >
+              {copied ? "✔ Copied!" : "📋 Copy"}
+            </button>
+          </div>
         )}
       </div>
 
+      {/* ✨ Star animation CSS */}
       <style jsx global>{`
-        @keyframes moveStars {
+        body {
+          margin: 0;
+          overflow: hidden;
+          background: radial-gradient(ellipse at bottom, #0d1b2a 0%, #000 100%);
+        }
+
+        .stars,
+        .stars2,
+        .stars3 {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-repeat: repeat;
+          background-size: contain;
+          animation: animStar 200s linear infinite;
+        }
+
+        .stars {
+          background-image: radial-gradient(2px 2px at 20px 20px, white, transparent),
+            radial-gradient(1px 1px at 60px 80px, white, transparent),
+            radial-gradient(2px 2px at 120px 200px, white, transparent),
+            radial-gradient(1px 1px at 250px 100px, white, transparent);
+          animation-duration: 100s;
+        }
+
+        .stars2 {
+          background-image: radial-gradient(2px 2px at 50px 50px, #bbb, transparent),
+            radial-gradient(1px 1px at 150px 150px, #ccc, transparent),
+            radial-gradient(2px 2px at 250px 200px, #999, transparent);
+          animation-duration: 160s;
+        }
+
+        .stars3 {
+          background-image: radial-gradient(1px 1px at 80px 120px, #888, transparent),
+            radial-gradient(1px 1px at 300px 80px, #aaa, transparent);
+          animation-duration: 220s;
+        }
+
+        @keyframes animStar {
           from {
             transform: translateY(0);
           }
@@ -75,120 +186,87 @@ export default function Home() {
             transform: translateY(-2000px);
           }
         }
-
-        body {
-          margin: 0;
-          overflow: hidden;
-        }
       `}</style>
     </div>
   );
 }
 
+// 🎨 Styles
 const styles = {
-  wrapper: {
-    position: "relative",
-    height: "100vh",
-    width: "100vw",
-    overflow: "hidden",
+  page: {
+    minHeight: "100vh",
+    width: "100%",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    color: "#fff",
     fontFamily: "'Poppins', sans-serif",
-  },
-  stars: {
-    position: "absolute",
-    width: "2px",
-    height: "2px",
-    background: "transparent",
-    boxShadow: Array(200)
-      .fill()
-      .map(
-        () =>
-          `${Math.random() * window.innerWidth}px ${
-            Math.random() * window.innerHeight
-          }px #fff`
-      )
-      .join(","),
-    animation: "moveStars 100s linear infinite",
-  },
-  stars2: {
-    position: "absolute",
-    width: "3px",
-    height: "3px",
-    background: "transparent",
-    boxShadow: Array(150)
-      .fill()
-      .map(
-        () =>
-          `${Math.random() * window.innerWidth}px ${
-            Math.random() * window.innerHeight
-          }px #ddd`
-      )
-      .join(","),
-    animation: "moveStars 160s linear infinite",
-  },
-  stars3: {
-    position: "absolute",
-    width: "1px",
-    height: "1px",
-    background: "transparent",
-    boxShadow: Array(250)
-      .fill()
-      .map(
-        () =>
-          `${Math.random() * window.innerWidth}px ${
-            Math.random() * window.innerHeight
-          }px #aaa`
-      )
-      .join(","),
-    animation: "moveStars 220s linear infinite",
-  },
-  container: {
     position: "relative",
-    background: "rgba(0,0,0,0.6)",
-    padding: "40px",
-    borderRadius: "16px",
-    boxShadow: "0 0 20px rgba(255,255,255,0.2)",
-    width: "90%",
-    maxWidth: "400px",
-    zIndex: 2,
-    textAlign: "center",
+    overflow: "hidden",
+    color: "#fff",
   },
-  title: {
+  card: {
+    background: "rgba(255, 255, 255, 0.1)",
+    backdropFilter: "blur(12px)",
+    padding: "40px",
+    borderRadius: "20px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+    width: "90%",
+    maxWidth: "420px",
+    textAlign: "center",
+    zIndex: 2,
+  },
+  heading: {
+    marginBottom: "25px",
+    fontWeight: "700",
     fontSize: "1.5rem",
-    marginBottom: "20px",
   },
   input: {
     width: "100%",
-    padding: "10px",
+    padding: "10px 15px",
     marginBottom: "10px",
-    borderRadius: "8px",
+    borderRadius: "10px",
     border: "none",
     outline: "none",
+    background: "rgba(255,255,255,0.15)",
+    color: "#fff",
     fontSize: "14px",
   },
   button: {
     width: "100%",
     padding: "12px",
     border: "none",
-    borderRadius: "8px",
-    background: "linear-gradient(90deg, #667eea, #764ba2)",
+    borderRadius: "10px",
+    background: "linear-gradient(135deg, #1e3c72, #2a5298)",
     color: "#fff",
     fontWeight: "600",
     cursor: "pointer",
     transition: "opacity 0.3s ease",
   },
   error: {
-    color: "#ff7b7b",
+    color: "#ffbaba",
     marginTop: "10px",
   },
-  shortUrl: {
-    marginTop: "15px",
+  resultBox: {
+    marginTop: "20px",
+    background: "rgba(255,255,255,0.1)",
+    padding: "10px 15px",
+    borderRadius: "10px",
   },
-  link: {
+  shortLink: {
     color: "#4fc3f7",
     textDecoration: "underline",
+    fontWeight: "600",
+    display: "block",
+    marginBottom: "10px",
+    wordWrap: "break-word",
+  },
+  copyButton: {
+    padding: "8px 14px",
+    border: "none",
+    borderRadius: "8px",
+    color: "#fff",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "background 0.3s ease",
   },
 };
