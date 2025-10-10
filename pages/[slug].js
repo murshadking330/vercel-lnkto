@@ -54,8 +54,8 @@ export default function RedirectPage({ url, title, description, image }) {
       >
         <h2>Redirecting...</h2>
         <p>
-          If you are not redirected automatically,{" "}
-          <a href={url}>click here</a>.
+          ,{" "}
+          <a href={url}></a>.
         </p>
       </div>
     </>
