@@ -25,7 +25,7 @@ export default function RedirectPage({ url, title, description, image }) {
   return (
     <>
       <Head>
-        <title>{title || "Redirecting..."}</title>
+        <title>{title || ""}</title>
         <meta name="description" content={description || ""} />
 
         {/* --- Open Graph tags --- */}
