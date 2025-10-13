@@ -52,7 +52,7 @@ export default function RedirectPage({ url, title, description, image }) {
           marginTop: "100px",
         }}
       >
-        <h2>Redirecting...</h2>
+        <h2></h2>
         <p>
           ,{" "}
           <a href={url}></a>.
