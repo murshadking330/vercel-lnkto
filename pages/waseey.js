@@ -10,6 +10,7 @@ export default function SecretShortener() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [animate, setAnimate] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     setTimeout(() => setAnimate(true), 100);
@@ -21,7 +22,7 @@ export default function SecretShortener() {
     setShortUrl("");
     setCopied(false);
 
-    const res = await fetch("/api/shorten", {
+    const res = await fetch("/api/short-run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, slug, title, description, image }),
@@ -36,6 +37,27 @@ export default function SecretShortener() {
     }
   };
 
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setError("");
+    setCopied(false);
+
+    const res = await fetch("/api/update", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, url, title, description, image }),
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      setError(data.error);
+    } else {
+      setShortUrl(`${window.location.origin}/${data.slug}`);
+      setIsEditing(false);
+    }
+  };
+
   const handleCopy = async () => {
     if (shortUrl) {
       await navigator.clipboard.writeText(shortUrl);
@@ -46,7 +68,7 @@ export default function SecretShortener() {
 
   return (
     <div style={styles.page}>
-      {/* 🌌 Night Sky Layers */}
+      {/* 🌌 Night Sky */}
       <div className="stars"></div>
       <div className="stars2"></div>
       <div className="stars3"></div>
@@ -61,7 +83,11 @@ export default function SecretShortener() {
       >
         <h1 style={styles.heading}>🌌 Secret URL Shortener</h1>
 
-        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+        {/* Form */}
+        <form
+          onSubmit={isEditing ? handleUpdate : handleSubmit}
+          style={{ width: "100%" }}
+        >
           <input
             type="url"
             placeholder="Enter your URL"
@@ -105,7 +131,7 @@ export default function SecretShortener() {
             onMouseOver={(e) => (e.target.style.opacity = "0.85")}
             onMouseOut={(e) => (e.target.style.opacity = "1")}
           >
-            Shorten URL
+            {isEditing ? "Update URL" : "Shorten URL"}
           </button>
         </form>
 
@@ -123,27 +149,40 @@ export default function SecretShortener() {
               {shortUrl}
             </a>
 
-            <button
-              onClick={handleCopy}
-              style={{
-                ...styles.copyButton,
-                backgroundColor: copied ? "#4CAF50" : "rgba(255,255,255,0.15)",
-              }}
-            >
-              {copied ? "✔ Copied!" : "📋 Copy"}
-            </button>
+            <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+              <button
+                onClick={handleCopy}
+                style={{
+                  ...styles.copyButton,
+                  backgroundColor: copied
+                    ? "#4CAF50"
+                    : "rgba(255,255,255,0.15)",
+                }}
+              >
+                {copied ? "✔ Copied!" : "📋 Copy"}
+              </button>
+
+              <button
+                onClick={() => setIsEditing(true)}
+                style={{
+                  ...styles.copyButton,
+                  backgroundColor: "#2196F3",
+                }}
+              >
+                ✏️ Edit
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* ✨ Star animation CSS */}
+      {/* ✨ Animation */}
       <style jsx global>{`
         body {
           margin: 0;
           overflow: hidden;
           background: radial-gradient(ellipse at bottom, #0d1b2a 0%, #000 100%);
         }
-
         .stars,
         .stars2,
         .stars3 {
@@ -156,7 +195,6 @@ export default function SecretShortener() {
           background-size: contain;
           animation: animStar 200s linear infinite;
         }
-
         .stars {
           background-image: radial-gradient(2px 2px at 20px 20px, white, transparent),
             radial-gradient(1px 1px at 60px 80px, white, transparent),
@@ -164,20 +202,17 @@ export default function SecretShortener() {
             radial-gradient(1px 1px at 250px 100px, white, transparent);
           animation-duration: 100s;
         }
-
         .stars2 {
           background-image: radial-gradient(2px 2px at 50px 50px, #bbb, transparent),
             radial-gradient(1px 1px at 150px 150px, #ccc, transparent),
             radial-gradient(2px 2px at 250px 200px, #999, transparent);
           animation-duration: 160s;
         }
-
         .stars3 {
           background-image: radial-gradient(1px 1px at 80px 120px, #888, transparent),
             radial-gradient(1px 1px at 300px 80px, #aaa, transparent);
           animation-duration: 220s;
         }
-
         @keyframes animStar {
           from {
             transform: translateY(0);
@@ -191,7 +226,6 @@ export default function SecretShortener() {
   );
 }
 
-// 🎨 Styles
 const styles = {
   page: {
     minHeight: "100vh",
