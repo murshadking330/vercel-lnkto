@@ -10,6 +10,8 @@ export default function SecretShortener() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [animate, setAnimate] = useState(false);
+
+  // 🆕 Added for Edit Mode
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -22,30 +24,12 @@ export default function SecretShortener() {
     setShortUrl("");
     setCopied(false);
 
-    const res = await fetch("/api/short-run", {
+    const endpoint = isEditing ? "/api/update" : "/api/shorten";
+
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, slug, title, description, image }),
-    });
-
-    const data = await res.json();
-
-    if (data.error) {
-      setError(data.error);
-    } else {
-      setShortUrl(`${window.location.origin}/${data.slug}`);
-    }
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    setError("");
-    setCopied(false);
-
-    const res = await fetch("/api/update", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, url, title, description, image }),
     });
 
     const data = await res.json();
@@ -66,9 +50,16 @@ export default function SecretShortener() {
     }
   };
 
+  const handleEdit = () => {
+    // 🆕 Fill current values for editing
+    const currentSlug = shortUrl.split("/").pop();
+    setSlug(currentSlug);
+    setIsEditing(true);
+  };
+
   return (
     <div style={styles.page}>
-      {/* 🌌 Night Sky */}
+      {/* 🌌 Night Sky Layers */}
       <div className="stars"></div>
       <div className="stars2"></div>
       <div className="stars3"></div>
@@ -81,13 +72,11 @@ export default function SecretShortener() {
           transition: "all 0.8s ease",
         }}
       >
-        <h1 style={styles.heading}>🌌 Secret URL Shortener</h1>
+        <h1 style={styles.heading}>
+          {isEditing ? "✏️ Edit Short Link" : "🌌 Secret URL Shortener"}
+        </h1>
 
-        {/* Form */}
-        <form
-          onSubmit={isEditing ? handleUpdate : handleSubmit}
-          style={{ width: "100%" }}
-        >
+        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
           <input
             type="url"
             placeholder="Enter your URL"
@@ -102,6 +91,7 @@ export default function SecretShortener() {
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             style={styles.input}
+            disabled={isEditing} // Slug fix during edit
           />
           <input
             type="text"
@@ -131,7 +121,7 @@ export default function SecretShortener() {
             onMouseOver={(e) => (e.target.style.opacity = "0.85")}
             onMouseOut={(e) => (e.target.style.opacity = "1")}
           >
-            {isEditing ? "Update URL" : "Shorten URL"}
+            {isEditing ? "Update Link" : "Shorten URL"}
           </button>
         </form>
 
@@ -162,8 +152,9 @@ export default function SecretShortener() {
                 {copied ? "✔ Copied!" : "📋 Copy"}
               </button>
 
+              {/* ✏️ Edit Button */}
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={handleEdit}
                 style={{
                   ...styles.copyButton,
                   backgroundColor: "#2196F3",
@@ -176,13 +167,13 @@ export default function SecretShortener() {
         )}
       </div>
 
-      {/* ✨ Animation */}
       <style jsx global>{`
         body {
           margin: 0;
           overflow: hidden;
           background: radial-gradient(ellipse at bottom, #0d1b2a 0%, #000 100%);
         }
+
         .stars,
         .stars2,
         .stars3 {
@@ -195,6 +186,7 @@ export default function SecretShortener() {
           background-size: contain;
           animation: animStar 200s linear infinite;
         }
+
         .stars {
           background-image: radial-gradient(2px 2px at 20px 20px, white, transparent),
             radial-gradient(1px 1px at 60px 80px, white, transparent),
@@ -202,17 +194,20 @@ export default function SecretShortener() {
             radial-gradient(1px 1px at 250px 100px, white, transparent);
           animation-duration: 100s;
         }
+
         .stars2 {
           background-image: radial-gradient(2px 2px at 50px 50px, #bbb, transparent),
             radial-gradient(1px 1px at 150px 150px, #ccc, transparent),
             radial-gradient(2px 2px at 250px 200px, #999, transparent);
           animation-duration: 160s;
         }
+
         .stars3 {
           background-image: radial-gradient(1px 1px at 80px 120px, #888, transparent),
             radial-gradient(1px 1px at 300px 80px, #aaa, transparent);
           animation-duration: 220s;
         }
+
         @keyframes animStar {
           from {
             transform: translateY(0);
@@ -226,6 +221,7 @@ export default function SecretShortener() {
   );
 }
 
+// 🎨 Styles
 const styles = {
   page: {
     minHeight: "100vh",
