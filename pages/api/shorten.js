@@ -1,4 +1,6 @@
 import { kv } from "@vercel/kv";
+import fetch from "node-fetch";
+import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -19,6 +21,33 @@ export default async function handler(req, res) {
       return res
         .status(400)
         .json({ error: "Slug already exists. Try another." });
+    }
+
+    // 🧠 اگر user نے کچھ meta نہیں دیا، تو خود fetch کرو
+    if ((!title || title.trim() === "") && (!description || !image)) {
+      try {
+        const response = await fetch(url, { timeout: 8000 });
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        title =
+          title ||
+          $('meta[property="og:title"]').attr("content") ||
+          $("title").text() ||
+          "";
+        description =
+          description ||
+          $('meta[property="og:description"]').attr("content") ||
+          $('meta[name="description"]').attr("content") ||
+          "";
+        image =
+          image ||
+          $('meta[property="og:image"]').attr("content") ||
+          $('link[rel="image_src"]').attr("href") ||
+          "";
+      } catch (err) {
+        console.log("Meta fetch error:", err);
+      }
     }
 
     // Save full metadata
